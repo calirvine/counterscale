@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { Mock, describe, expect, test, vi } from 'vitest'
 import httpMocks from 'node-mocks-http';
 
 import { collectRequestHandler } from './collect';
@@ -7,7 +7,7 @@ const defaultRequestParams = generateRequestParams({
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
 });
 
-function generateRequestParams(headers: any /* todo */) {
+function generateRequestParams(headers: Record<string, string>) {
     return {
         method: 'GET',
         url: 'https://example.com/user/42?' + new URLSearchParams({
@@ -47,7 +47,7 @@ describe("collectRequestHandler", () => {
         expect(env.WEB_COUNTER_AE.writeDataPoint).toHaveBeenCalled();
 
         // verify data shows up in the right place
-        expect((writeDataPoint as any).mock.calls[0][0]).toEqual({
+        expect((writeDataPoint as Mock).mock.calls[0][0]).toEqual({
             blobs: [
                 "example.com", // host
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36", // ua string
@@ -82,7 +82,7 @@ describe("collectRequestHandler", () => {
         collectRequestHandler(request, env);
 
         const writeDataPoint = env.WEB_COUNTER_AE.writeDataPoint;
-        expect((writeDataPoint as any).mock.calls[0][0]).toHaveProperty("doubles", [
+        expect((writeDataPoint as Mock).mock.calls[0][0]).toHaveProperty("doubles", [
             1, // new visitor
             1, // new session
         ]);
@@ -105,7 +105,7 @@ describe("collectRequestHandler", () => {
         collectRequestHandler(request, env);
 
         const writeDataPoint = env.WEB_COUNTER_AE.writeDataPoint;
-        expect((writeDataPoint as any).mock.calls[0][0]).toHaveProperty("doubles", [
+        expect((writeDataPoint as Mock).mock.calls[0][0]).toHaveProperty("doubles", [
             0, // new visitor
             0, // new session
         ]);
@@ -128,7 +128,7 @@ describe("collectRequestHandler", () => {
         collectRequestHandler(request, env);
 
         const writeDataPoint = env.WEB_COUNTER_AE.writeDataPoint;
-        expect((writeDataPoint as any).mock.calls[0][0]).toHaveProperty("doubles", [
+        expect((writeDataPoint as Mock).mock.calls[0][0]).toHaveProperty("doubles", [
             0, // new visitor
             1, // new session
         ]);
@@ -151,7 +151,7 @@ describe("collectRequestHandler", () => {
         collectRequestHandler(request, env);
 
         const writeDataPoint = env.WEB_COUNTER_AE.writeDataPoint;
-        expect((writeDataPoint as any).mock.calls[0][0]).toHaveProperty("doubles", [
+        expect((writeDataPoint as Mock).mock.calls[0][0]).toHaveProperty("doubles", [
             1, // new visitor
             1, // new session
         ]);

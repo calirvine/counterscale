@@ -9,7 +9,7 @@ export default function TimeSeriesChart({ data, intervalType }: InferProps<typeo
     }
 
     // get the max integer value of data views
-    const maxViews = Math.max(...data.map((item: any) => item.views));
+    const maxViews = data.reduce((max, current) => current.views > max ? current.views : max, data[0].views);
 
     function xAxisDateFormatter(date: string): string {
 
@@ -65,6 +65,10 @@ export default function TimeSeriesChart({ data, intervalType }: InferProps<typeo
 }
 
 TimeSeriesChart.propTypes = {
-    data: PropTypes.any,
-    intervalType: PropTypes.string
-}
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      views: PropTypes.number.isRequired,
+    }).isRequired
+  ).isRequired,
+  intervalType: PropTypes.string,
+};

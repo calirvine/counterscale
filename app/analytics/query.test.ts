@@ -4,15 +4,16 @@ import { AnalyticsEngineAPI } from "./query";
 
 // mock out fetch
 global.fetch = vi.fn();
-function createFetchResponse(data: any) {
+function createFetchResponse<T>(data: T) {
     return {
         ok: true,
-        json: () => new Promise((resolve) => resolve(data))
+        json: () => new Promise<T>((resolve) => resolve(data))
     }
 }
 
 describe("AnalyticsEngineAPI", () => {
     const api = new AnalyticsEngineAPI("test_account_id_abc123", "test_api_token_def456");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fetch = global.fetch as any;
 
     beforeEach(() => {

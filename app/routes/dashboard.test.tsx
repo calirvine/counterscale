@@ -13,14 +13,15 @@ import {
 import Dashboard, { loader } from "./dashboard";
 
 global.fetch = vi.fn();
-function createFetchResponse(data: any) {
+function createFetchResponse<T>(data: T) {
     return {
         ok: true,
-        json: () => new Promise((resolve) => resolve(data))
+        json: () => new Promise<T>((resolve) => resolve(data))
     }
 }
 
 describe("Dashboard route", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fetch = global.fetch as any;
 
     beforeAll(() => {

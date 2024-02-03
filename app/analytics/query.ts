@@ -8,9 +8,8 @@ import invariant from '~/lib/utils';
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
-export interface AnalyticsQueryResultRow {
-    [key: string]: any
-}
+type AnalyticsQueryResultRow = Record<string, string | number>;
+
 interface AnalyticsQueryResult<SelectionSet extends AnalyticsQueryResultRow> {
     meta: string,
     data: SelectionSet[],
@@ -24,22 +23,25 @@ interface AnalyticsCountResult {
     visitors: number
 }
 
-function testAnalyticsQueryResult<T extends Record<string, any>>(
-    result: any,
-    testRow: (row: any) => row is T
+function testAnalyticsQueryResult<T extends AnalyticsQueryResultRow>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- this is a type guard, any is appropriate here
+  result: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- this is a type guard, any is appropriate here
+  testRow: (row: any) => row is T
 ): result is AnalyticsQueryResult<T> {
-    return (
-        result.meta &&
-        typeof result.meta === 'string' &&
-        result.data &&
-        Array.isArray(result.data) &&
-        // Empty result set always passes, otherwise test the first row and be optimistic that the rest is fine
-        (result.data.length === 0 || testRow(result.data[0])) &&
-        result.rows &&
-        typeof result.rows === 'number' &&
-        result.rows_before_limit_at_least &&
-        typeof result.rows_before_limit_at_least === 'number'
-    );
+  return (
+    result &&
+    result.meta &&
+    typeof result.meta === "string" &&
+    result.data &&
+    Array.isArray(result.data) &&
+    // Empty result set always passes, otherwise test the first row and be optimistic that the rest is fine
+    (result.data.length === 0 || testRow(result.data[0])) &&
+    result.rows &&
+    typeof result.rows === "number" &&
+    result.rows_before_limit_at_least &&
+    typeof result.rows_before_limit_at_least === "number"
+  );
 }
 
 /**
@@ -316,7 +318,7 @@ export class AnalyticsEngineAPI {
         return returnPromise;
     }
 
-    async getVisitorCountByColumn(siteId: string, column: keyof typeof ColumnMappings, sinceDays: number, limit?: number) {
+    async getVisitorCountByColumn<T extends keyof typeof ColumnMappings>(siteId: string, column: T, sinceDays: number, limit?: number) {
         // defaults to 1 day if not specified
         const interval = sinceDays || 1;
         limit = limit || 10;
@@ -333,11 +335,14 @@ export class AnalyticsEngineAPI {
             LIMIT ${limit}`;
 
         type SelectionSet = {
-            count: number;
-            [key: string]: ColumnMappingToType<typeof _column>;
-        };
+          count: number;
+        } & Record<
+          typeof ColumnMappings[T],
+          ColumnMappingToType<(typeof ColumnMappings)[T]>
+        >;
 
-        return new Promise<[string | number, number][]>((resolve, reject) => (async () => {
+
+        return new Promise<[ColumnMappingToType<typeof ColumnMappings[T]> | "(none)", number][]>((resolve, reject) => (async () => {
             const response = await this.query(query);
 
             if (!response.ok) {
@@ -360,13 +365,14 @@ export class AnalyticsEngineAPI {
                 ),
                 'getVisitorCountByColumn response did not match expected result'
             );
-
             resolve(
-                responseData.data.map((row) => {
-                    const key =
-                        row[_column] === '' ? '(none)' : row[_column];
-                    return [key, row['count'] as number];
-                })
+              responseData.data.map((row) => {
+                const key = row[_column] === "" ? "(none)" : row[_column];
+                return [key, row["count"]] as [
+                  ColumnMappingToType<(typeof ColumnMappings)[T]> | "(none)",
+                  number
+                ];
+              })
             );
         })());
     }

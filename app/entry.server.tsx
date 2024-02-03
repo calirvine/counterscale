@@ -22,6 +22,7 @@ export default async function handleRequest(
     loadContext: AppLoadContext
 ) {
     const body = await renderToReadableStream(
+        // @ts-expect-error - EntryContext does not define `isSpaMode` which is required by RemixServer. This is fixed in 2.5.1.
         <RemixServer context={remixContext} url={request.url} />,
         {
             signal: request.signal,

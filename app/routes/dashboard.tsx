@@ -11,7 +11,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 
-import { AnalyticsEngineAPI, AnalyticsQueryResultRow } from "../analytics/query";
+import { AnalyticsEngineAPI } from "../analytics/query";
 
 import TableCard from "~/components/TableCard";
 import TimeSeriesChart from "~/components/TimeSeriesChart";
@@ -98,21 +98,23 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
     });
 };
 
-function convertCountryCodesToNames(countByCountry: AnalyticsQueryResultRow[]): AnalyticsQueryResultRow[] {
-    const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
-    return countByCountry.map((countByBrowserRow: AnalyticsQueryResultRow) => {
-        let countryName;
-        try {
-            // throws an exception if country code isn't valid
-            //   use try/catch to be defensive and not explode if an invalid
-            //   country code gets insrted into Analytics Engine
-            countryName = regionNames.of(countByBrowserRow[0]);  // "United States"
-        } catch (err) {
-            countryName = '(unknown)'
-        }
-        const count = countByBrowserRow[1];
-        return [countryName, count];
-    })
+function convertCountryCodesToNames(
+  countByCountry: Awaited<ReturnType<AnalyticsEngineAPI['getCountByCountry']>>
+): [string, number][] {
+  const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+  return countByCountry.map((countByBrowserRow) => {
+    let countryName: string;
+    try {
+      // throws an exception if country code isn't valid
+      //   use try/catch to be defensive and not explode if an invalid
+      //   country code gets insrted into Analytics Engine
+      countryName = regionNames.of(countByBrowserRow[0]) ?? "(unknown)"; // "United States"
+    } catch (err) {
+      countryName = "(unknown)";
+    }
+    const count = countByBrowserRow[1];
+    return [countryName, count];
+  });
 }
 
 export default function Dashboard() {
@@ -134,7 +136,7 @@ export default function Dashboard() {
         });
     }
 
-    const chartData: any = [];
+    const chartData: {date: string, views: number}[] = [];
     data.viewsGroupedByInterval.forEach((row) => {
         chartData.push({
             date: row[0],

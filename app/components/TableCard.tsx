@@ -22,7 +22,7 @@ export default function TableCard({ countByProperty, columnHeaders }: InferProps
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {(countByProperty || []).map((item: any) => (
+                {(countByProperty || []).map((item: [string | number, string | number] /* TODO this type should be fixed in the prop types */) => (
                     <TableRow key={item[0]}>
                         <TableCell className="font-medium">{item[0]}</TableCell>
                         <TableCell className="text-right">{item[1]}</TableCell>
